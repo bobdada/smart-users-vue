@@ -1,6 +1,6 @@
 <template>
-  <div id="app">
-    <nav>
+  <div id="app" class="flexing">
+    <nav flex="{1}">
       <ul>
         <div class="dashboard">
           <h2>Dashboard</h2>
@@ -17,53 +17,55 @@
         </li>
       </ul>
     </nav>
-
-    <router-view />
+    <div id="router">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 
+const store = useStore()
 const router = useRouter()
-import axios from 'axios'
 
-const topUsers = ref([])
-const totalUsers = ref(0)
-
-async function fetchTotalUsers() {
-  try {
-    const response = await axios.get('http://localhost:3000/api/users')
-    const data = response.data.data
-
-    topUsers.value = data.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3)
-    totalUsers.value = data.length
-  } catch (error) {
-    console.error('Failed to fetch users:', error)
-  }
-}
-
-fetchTotalUsers() // Initial fetch
-
-// Watch for route changes to refetch data if necessary
-watch(
-  () => router.currentRoute.value.path,
-  () => {
-    fetchTotalUsers()
-  }
-)
+const topUsers = computed(() => store.state.topUsers)
+const totalUsers = computed(() => store.state.totalUsers)
 
 function goToUserDetail(id) {
-  window.location.href = `/user/${id}`
+  router.push(`/user/${id}`)
 }
+
+// Fetch users from Vuex store
+store.dispatch('fetchUsers')
 </script>
 
 <style scoped>
+#app {
+  min-height: 100vh;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
 .dashboard {
   border: 10px solid black;
   margin-bottom: 20px;
   padding: 10px;
   border-radius: 5px;
+}
+nav {
+  flex: 1;
+}
+#router {
+  flex: 3;
+}
+.flexing {
+  display: flex;
+  gap: 20px;
+}
+li {
+  cursor: pointer;
 }
 </style>

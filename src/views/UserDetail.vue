@@ -3,8 +3,12 @@
     <h2>User Details</h2>
     <!-- Display user details here -->
 
-    <p>Name: {{ user.name }}</p>
-    <p>address: {{ user.address }}</p>
+    <p>
+      Name: <span> {{ user?.name }} </span>
+    </p>
+    <p>
+      address: <span>{{ user?.address }} </span>
+    </p>
 
     <form @submit.prevent="updateUser">
       <div class="form-group">
@@ -23,65 +27,40 @@
 
 <script setup>
 import { ref, watchEffect } from 'vue'
-import axios from 'axios'
 import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
 
 const route = useRoute()
 const { id } = route.params
+const store = useStore() // Use Vuex store
 const user = ref(null)
 
+// Fetch user details based on ID from Vuex store
 watchEffect(() => {
-  // Fetch user details based on ID
-  axios.get(`http://localhost:3000/api/users/${id}`).then((response) => {
-    user.value = response.data.data
-  })
+  store.dispatch('fetchUsers') // Assuming fetchUsers action sets the state globally
 })
 
-function updateUser() {
-  axios
-    .patch(`http://localhost:3000/api/users/${id}`, user.value)
-    .then((response) => {
-      fetchAndSetUsers()
-
-      // Handle success, e.g., show a message or redirect
-      alert('User updated successfully')
-
-      console.log('response updating user', response)
-    })
-    .catch((error) => {
-      alert(error)
-      // Handle error
-    })
+// Update user
+async function updateUser() {
+  await store.dispatch('updateUser', user.value)
+  user.value = {} // Reset form after submission
+  alert('User updated successfully')
 }
 
-function deleteUser() {
+// Delete user
+async function deleteUser() {
   if (confirm('Are you sure you want to delete this user?')) {
-    axios
-      .delete(`http://localhost:3000/api/users/${id}`)
-      .then((response) => {
-        fetchAndSetUsers()
-
-        alert('User deleted successfully')
-        console.log('response deleting user', response)
-        // Handle successful deletion, e.g., redirect to user list
-      })
-      .catch((error) => {
-        alert(error)
-        // Handle error
-      })
+    await store.dispatch('deleteUser', id)
+    alert('User deleted successfully')
+    // Redirect or clear user detail view
   }
-}
-
-async function fetchAndSetUsers() {
-  const response = await axios.get('http://localhost:3000/users')
-  // Assuming you have a reactive variable for the user list
-  usersList.value = response.data.users
-  // Optionally, refetch the total users count
-  fetchTotalUsers()
 }
 </script>
 
 <style scoped>
+span {
+  font-weight: 700;
+}
 .page {
   border: 1px solid black;
   margin-bottom: 20px;
@@ -90,11 +69,13 @@ async function fetchAndSetUsers() {
 }
 .form-group {
   margin-bottom: 15px;
+  margin-top: 15px;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 5px;
+  font-size: 12px;
 }
 
 .form-group input {
@@ -108,7 +89,7 @@ async function fetchAndSetUsers() {
 .btn-primary,
 .btn-danger {
   background-color: transparent;
-  color: #333;
+  color: #ffff;
   padding: 10px 20px;
   border: none;
   border-radius: 4px;
