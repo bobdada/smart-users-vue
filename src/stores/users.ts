@@ -1,6 +1,7 @@
-// src/store.js
 import { createStore } from 'vuex'
 import axios from 'axios'
+
+const baseUrl = 'http://localhost:3000/api/users'
 
 export default createStore({
   state: {
@@ -20,44 +21,46 @@ export default createStore({
     },
     ADD_USER(state, newUser) {
       state.users.push(newUser)
-      state.totalUsers += 1 // Assuming you have a totalUsers state property
+      state.totalUsers += 1
+      state.topUsers = [...state.users].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3)
     },
     UPDATE_USER(state, updatedUser) {
       const index = state.users.findIndex((user) => user.id === updatedUser.id)
       if (index !== -1) {
         state.users.splice(index, 1, updatedUser)
+        state.topUsers = [...state.users].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3)
       }
     },
     DELETE_USER(state, userId) {
       state.users = state.users.filter((user) => user.id !== userId)
+      state.topUsers = [...state.users].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3)
+      state.totalUsers -= 1
     }
   },
   actions: {
     async fetchUsers({ commit }) {
       try {
-        const response = await axios.get('http://localhost:3000/api/users')
+        const response = await axios.get(baseUrl)
         const data = response.data.data
         commit('SET_USERS', data)
-        commit('SET_TOP_USERS', data.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3))
+        commit('SET_TOP_USERS', [...data].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 3))
         commit('SET_TOTAL_USERS', data.length)
       } catch (error) {
         console.error('Failed to fetch users:', error)
       }
     },
     addUser({ commit }, newUser) {
-      axios.post('http://localhost:3000/api/users', newUser).then((response) => {
+      axios.post(baseUrl, newUser).then((response) => {
         commit('ADD_USER', response.data.data)
       })
     },
     updateUser({ commit }, updatedUser) {
-      axios
-        .patch(`http://localhost:3000/api/users/${updatedUser.id}`, updatedUser)
-        .then((response) => {
-          commit('UPDATE_USER', response.data.data)
-        })
+      axios.patch(`${baseUrl}/${updatedUser.id}`, updatedUser).then((_) => {
+        commit('UPDATE_USER', updatedUser)
+      })
     },
     deleteUser({ commit }, userId) {
-      axios.delete(`http://localhost:3000/api/users/${userId}`).then((response) => {
+      axios.delete(`${baseUrl}/${userId}`).then((_) => {
         commit('DELETE_USER', userId)
       })
     }

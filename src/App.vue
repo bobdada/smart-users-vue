@@ -26,7 +26,7 @@
 <script setup>
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 
 const store = useStore()
 const router = useRouter()
@@ -38,8 +38,9 @@ function goToUserDetail(id) {
   router.push(`/user/${id}`)
 }
 
-// Fetch users from Vuex store
-store.dispatch('fetchUsers')
+watchEffect(() => {
+  store.dispatch('fetchUsers') // Assuming fetchUsers action sets the state globally
+})
 </script>
 
 <style scoped>
